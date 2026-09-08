@@ -1,0 +1,64 @@
+# ============================================================
+#  .gitignore — Ulos Simulator
+# ============================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# --- Virtual Environment ---
+venv/
+.venv/
+env/
+ENV/
+
+# --- Django ---
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/static/
+/media/
+
+# --- ML Model (besar, simpan terpisah) ---
+*.h5
+*.pkl
+*.pb
+*.tflite
+class_names.json
+
+# --- IDE & Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Environment Variables ---
+.env
+.env.local
+.env.production
+secrets.py
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- Test & Coverage ---
+.coverage
+htmlcov/
+.pytest_cache/
+
+# --- Windows ---
+desktop.ini
+$RECYCLE.BIN/

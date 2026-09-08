@@ -1,0 +1,352 @@
+{
+  "name": "RAG TA 109 Final",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "RAG upload document",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "file",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5784296e-ae96-4478-914e-07bb3f3bc3e5",
+      "name": "On form submission",
+      "webhookId": "eedbbbd8-46dc-45ad-8798-76198e82c2de"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        0
+      ],
+      "id": "7b4f3a62-3877-4a5c-b1db-319848ee511e",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "p96mdTzObvZiyTjh",
+          "name": "Supabase account 26"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        288
+      ],
+      "id": "0f02675f-8b15-4cf4-99ff-318e419a6b23",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.chatInput }}",
+        "options": {
+          "systemMessage": "Harap jawab berdasarkan data yang ada di Supabase Vector Store DB. Jika data tidak tersedia, harap sampaikan dengan sopan 'Saya tidak tahu'. Jawaban harus disampaikan dengan bahasa yang mudah dipahami, terutama bagi orang awam, dan menggunakan format yang jelas dan rapi. Selalu sertakan sitasi di akhir jawaban, seperti yang tercantum dalam dokumen, jika di tanya jenis ulos atau nama ulos, jangan tampilkan sitasi"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        832,
+        0
+      ],
+      "id": "8283f8ec-4fed-4839-9007-12aeeea7a6a4",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Gunakan data dari database untuk menjawab pertanyaan",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 20,
+        "useReranker": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        992,
+        192
+      ],
+      "id": "67b358fb-b8bb-49dd-9731-fb266e20fdbe",
+      "name": "Supabase Vector Store DB",
+      "credentials": {
+        "supabaseApi": {
+          "id": "p96mdTzObvZiyTjh",
+          "name": "Supabase account 26"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "topN": 1
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        368
+      ],
+      "id": "6e2ad77c-16b9-40bf-a4a2-c02a37bdd368",
+      "name": "Reranker Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "mVXWTjpybrAb3Uvx",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tanya-rag informasi ULOS",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        592,
+        0
+      ],
+      "id": "18f3c821-817b-4e7b-8700-28a570c4f778",
+      "name": "Webhook",
+      "webhookId": "10d05e4b-3819-4b43-b9df-55e28901aa0c"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ \"reply\": $json.output }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "96ef9670-b7c7-4a95-a43f-2d26a240059e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "user_web"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        320
+      ],
+      "id": "4c417e10-b533-4cb7-aed1-61a09c7dd8fe",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "projectId": {
+          "__rl": true,
+          "value": "n8n-api-keys-499101",
+          "mode": "id"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleVertex",
+      "typeVersion": 1,
+      "position": [
+        496,
+        288
+      ],
+      "id": "cf124c8c-316f-4a23-ab97-10e2c716021a",
+      "name": "Embeddings Google Vertex",
+      "credentials": {
+        "googleApi": {
+          "id": "FjtIA7Mxp7lEhmZT",
+          "name": "Google Service Account account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "projectId": {
+          "__rl": true,
+          "value": "n8n-api-keys-499101",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleVertex",
+      "typeVersion": 1,
+      "position": [
+        832,
+        176
+      ],
+      "id": "607215c8-a3a4-4555-91ec-369ff7905eb1",
+      "name": "Google Vertex Chat Model",
+      "credentials": {
+        "googleApi": {
+          "id": "FjtIA7Mxp7lEhmZT",
+          "name": "Google Service Account account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store DB": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Supabase Vector Store DB",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Vertex": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Supabase Vector Store DB",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Vertex Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "e21cd979-a2b9-46a7-8666-506a9b5d1b9b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "73IO9aEvP6BpnTB4UeoRL",
+  "tags": []
+}
