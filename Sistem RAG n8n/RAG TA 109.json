@@ -1,0 +1,465 @@
+{
+  "name": "RAG TA 109",
+  "nodes": [
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "user_web"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -864,
+        176
+      ],
+      "id": "447ffff9-60d7-449b-9366-69e95d71cc37",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "prompt": "={{ $json.message.text }}",
+        "topK": "=6",
+        "useReranker": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -1424,
+        32
+      ],
+      "id": "7ab81a69-9364-450a-b881-bc3b30b399ad",
+      "name": "Supabase Evidence",
+      "credentials": {
+        "supabaseApi": {
+          "id": "CQDqeN9wzlj4eGXq",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const documents = $input.all().map((item) => item.json);\n\nlet text = \"\";\n\ndocuments.forEach((doc) => {\n  let content = doc?.document?.pageContent || doc?.pageContent || \"\";\n  content = content.replace(/'/g, \"\\\\'\");\n  text += content;\n});\n\nreturn { json: { text } };\n"
+      },
+      "id": "0efbddc5-c5d2-4d40-b760-a3991015096e",
+      "name": "Code Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "RAG upload document",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "file",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -1760,
+        320
+      ],
+      "id": "9bdb8989-9441-468f-8e06-c99d08e6838d",
+      "name": "On form submission1",
+      "webhookId": "b71dfc22-5801-4ded-a233-68d0edce9326"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -1520,
+        320
+      ],
+      "id": "90adbd95-c220-4468-8e7b-81dbc994db1c",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "CQDqeN9wzlj4eGXq",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -944,
+        416
+      ],
+      "id": "36e9b826-d85d-4d4c-b7d1-a3420d342ded",
+      "name": "Embeddings Google Gemini1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eHzWTZkS6J0Me4TO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1648,
+        32
+      ],
+      "id": "b8fdb87c-efe6-4be1-8dc4-86dc6b84c535",
+      "name": "Telegram Trigger1",
+      "webhookId": "9b28904a-151e-46e4-8504-b589c535e97c",
+      "credentials": {
+        "telegramApi": {
+          "id": "fIIAJMGnfTZMXO3e",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger1').item.json.message.text }}\\n\\nKonteks hasil retrieval dari database:\\n{{ $json.text }}",
+        "options": {
+          "systemMessage": "Harap jawab berdasarkan data yang ada di Supabase Vector Store DB dan konteks retrieval yang diberikan. Jika data tidak tersedia, harap sampaikan dengan sopan 'Saya tidak tahu'. Jawaban harus disampaikan dengan bahasa yang mudah dipahami, terutama bagi orang awam, dan menggunakan format yang jelas dan rapi. Selalu sertakan sitasi di akhir jawaban, mengikuti format (Rumapea & Yohanna, 2018), seperti yang tercantum dalam dokumen."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -880,
+        -160
+      ],
+      "id": "0f515460-a60b-4da0-affc-cfe0bd59f83a",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1024,
+        144
+      ],
+      "id": "c44dcdce-d036-43e3-871a-b0f9cbba8ac2",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eHzWTZkS6J0Me4TO",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger1').item.json.message.chat.id }}",
+        "text": "=Jawaban AI:\n{{ $node[\"AI Agent1\"].json[\"output\"] }}\n\nEvaluasi:\n{{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -96,
+        -32
+      ],
+      "id": "8a19231f-9b49-4811-8cd3-6f242b5d9c7b",
+      "name": "Send a text message1",
+      "webhookId": "a88c2e6c-c185-45a9-8923-64d69de558bd",
+      "credentials": {
+        "telegramApi": {
+          "id": "fIIAJMGnfTZMXO3e",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Gunakan data dari database untuk menjawab pertanyaan",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 20,
+        "useReranker": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        -656,
+        176
+      ],
+      "id": "ea80e36e-c214-4003-9050-0c4ded932065",
+      "name": "Supabase Vector Store DB1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "CQDqeN9wzlj4eGXq",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "topN": 1
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        416
+      ],
+      "id": "cbdcebc0-c1ff-4cf8-85dd-3cca25614811",
+      "name": "Reranker Cohere1",
+      "credentials": {
+        "cohereApi": {
+          "id": "ItRhRXaTeFCd4Bkr",
+          "name": "Cohere account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -1408,
+        544
+      ],
+      "id": "abec58ff-dc02-4afa-bc23-a3b2939b942e",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an evaluator for a RAG chatbot.\n\nQuestion:\n{{ $('Telegram Trigger1').item.json.message.text }}\n\nAnswer:\n{{ $json.output }}\n\nKnowledge Base Context:\n{{ $('Code Context').item.json.text }}\n\nEvaluate the answer based on:\n1. Correctness\n2. Relevance\n3. Faithfulness to the knowledge base\n\nImportant rules:\n- You have access to the Question, the Answer, and the retrieved context\n- Use only the provided Knowledge Base Context to judge factual support\n- Do not use outside knowledge\n- Judge correctness from how well the answer addresses the question and matches the context\n- Judge relevance from whether the answer directly responds to the user's question\n- Mark hallucination as \"yes\" if the answer contains unsupported details, fabricated claims, or statements not backed by the context\n- Mark hallucination as \"no\" if the answer stays focused and is supported by the context\n- Return only valid raw JSON\n- Do not use markdown\n- Do not wrap the output in code fences\n- Skor 1-2: Jawaban tidak relevan atau tidak akurat, tidak ada hubungan dengan konteks. Skor ini diberikan jika jawaban benar-benar tidak sesuai dengan pertanyaan atau konteks yang diberikan, atau jika jawaban mengandung banyak kesalahan.\n- Skor 3: Jawaban memiliki kesalahan minor atau tidak sepenuhnya mendalam, namun masih relevan dan mendekati benar. Skor ini diberikan jika jawaban sudah cukup relevan dan akurat, tetapi masih ada beberapa kekurangan atau ketidaktepatan dalam menjawab.\n- Skor 4: Jawaban sangat baik, relevan, dan akurat, namun bisa sedikit lebih rinci. Skor ini diberikan jika jawaban sudah sangat tepat, relevan, dan akurat, tetapi bisa lebih detail atau komprehensif.\n- Skor 5: Jawaban sangat tepat, akurat, relevan, dan mendalam, tanpa adanya kekurangan. Skor ini diberikan jika jawaban sepenuhnya tepat, relevan, mendalam, dan sangat akurat sesuai dengan konteks yang ada, tanpa adanya informasi yang tidak relevan atau keliru.\n- gunakan bahasa indonesia untuk bagian feedback\n\nReturn this exact JSON structure:\n{\n  \"score\": number,\n  \"hallucination\": \"yes/no\",\n  \"feedback\": \"short explanation\"\n}",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -480,
+        -32
+      ],
+      "id": "a56515e2-a410-440b-a84f-8044a3e1d73e",
+      "name": "Basic LLM Chain1",
+      "retryOnFail": false
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Evidence": {
+      "main": [
+        [
+          {
+            "node": "Code Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Context": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission1": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store DB1",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Supabase Evidence",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Supabase Evidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store DB1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere1": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Supabase Vector Store DB1",
+            "type": "ai_reranker",
+            "index": 0
+          },
+          {
+            "node": "Supabase Evidence",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4acf91ee-9ca9-4f82-b0e1-01cd328670f9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7bdb4b59db6cefa6b8fa7993781ede3d893f73ef14dbefd525ae1695ab98755c"
+  },
+  "id": "jKqAeFPLXPavXcqB",
+  "tags": []
+}
