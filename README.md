@@ -327,7 +327,7 @@ File: `Sistem Djanggo/ulos_project/classifier/views.py` atau di berkas `.env`
 ## 👨‍💻 Pengembang
 
 **Reinhard Batubara**
-- GitHub: [@ReinhardBatubara](https://github.com/ReinhardBatubara)
+- GitHub: [@LennaFebriana](https://github.com/lennafebriana12)
 
 ---
 
