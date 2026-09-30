@@ -34,7 +34,6 @@ MODEL_PATH = os.path.join(settings.BASE_DIR, "../ulos_final_model.h5")
 # N8N_WEBHOOK_URL = "https://n8n-1.saturn.petra.ac.id/webhook-test/tanya-rag"
 N8N_WEBHOOK_URL = os.environ.get("N8N_WEBHOOK_URL", "https://n8n-1.saturn.petra.ac.id/webhook-test/tanya-rag")
 # # SETUP GEMINI API KEY DI SINI
-# GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyBBb75QEmxosQ8_YuKvKA3CN9mjtxA7-q8")
 # genai.configure(api_key=GEMINI_API_KEY)
 
 # SETUP SERVICE ACCOUNT GOOGLE CLOUD DI SINI
